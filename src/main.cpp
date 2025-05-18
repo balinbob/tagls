@@ -10,15 +10,18 @@
 #include <taglib/flacfile.h>
 #include <taglib/tag.h>
 #include <taglib/xiphcomment.h>
+#include <taglib/tstringlist.h>
+
 
 namespace fs = std::filesystem;
 
-struct hdr {
-    std::string artist;
-    std::string album;
-    std::string date;
-    std::string genre;
-    std::string comment;
+struct Hdr {
+    TagLib::StringList artist;
+    TagLib::StringList album;
+    TagLib::StringList date;
+    TagLib::StringList genre;
+    TagLib::StringList comment;
+    TagLib::StringList discnumber;
 };
 
 
@@ -32,11 +35,33 @@ void move_cursor_to_column(int col) {
     std::cout << "\033[" << col << "G";
 }
 
+bool stringListsEqual(const TagLib::StringList& a, const TagLib::StringList& b) {
+    if (a.size() != b.size()) return false;
+    for (size_t i = 0; i < a.size(); ++i)
+        if (a[i] != b[i]) return false;
+    return true;
+}
+
+bool operator==(const Hdr& a, const Hdr& b) {
+    return stringListsEqual(a.artist, b.artist) &&
+           stringListsEqual(a.album, b.album) &&
+           stringListsEqual(a.genre, b.genre) &&
+           stringListsEqual(a.date, b.date) &&
+           stringListsEqual(a.discnumber, b.discnumber) &&
+           stringListsEqual(a.comment, b.comment);
+}
+
+bool operator!=(const Hdr& a, const Hdr& b) {
+    return !(a == b);
+}
+
 int main(int argc, char* argv[]) {
     for (int argno = 1; argno < argc; argno++) {
         std::string arg = argv[argno];
         std::cout << arg << "\n";
         fs::path dir = arg;
+        Hdr prevHdr;
+        bool first = true;
         if (fs::exists(dir) && fs::is_directory(dir)) {
             for (const auto& entry : fs::directory_iterator(dir)) {
                 if (entry.is_regular_file() && toLower(entry.path().extension().string()) == ".flac") {
@@ -49,16 +74,49 @@ int main(int argc, char* argv[]) {
                     TagLib::FLAC::File* flacFile = dynamic_cast<TagLib::FLAC::File*>(&file);
                     if (flacFile != nullptr && flacFile->isValid()) {
                         if (TagLib::Ogg::XiphComment* xiph = file.xiphComment()) {
+                            Hdr h;
                             auto fields = xiph->fieldListMap();
                             for (const auto& [key, values] : fields) {
+                                std::string skey = key.to8Bit(true);
                                 int cursorColumn = fieldLen + 8;
                                 move_cursor_to_column(cursorColumn);
                                 std::cout << key << ":";
                                 for (const auto& val : values) {
                                     move_cursor_to_column(cursorColumn + 16);    
                                     std::cout << val << std::endl;
+                                    
+                                    if (toLower(skey) == "artist") {
+                                        h.artist = values;
+                                    }
+                                    else if (toLower(skey) == "album") {
+                                        h.album = values;
+                                    }
+                                    else if (toLower(skey) == "date") {
+                                        h.date = values;
+                                    }
+                                    else if (toLower(skey) == "genre") {
+                                        h.genre = values;
+                                    }
+                                    else if (toLower(skey) == "comment") {
+                                        h.comment = values;
+                                    }
+                                    else if (toLower(skey) == "discnumber") {
+                                        h.discnumber = values;
+                                    }
                                 }
                             }
+                            if (first) {
+                                first = false;
+                            }
+                            
+                            else if (h != prevHdr) {
+                                move_cursor_to_column(50);
+                                
+                                std::cout << "CHANGED!!!!!!!!!!!\n";
+                            }
+                            std::string artist = h.artist.toString().to8Bit(true);
+                            std::string discnumber  = h.discnumber.toString().to8Bit(true);
+                            prevHdr = h;
                         }
                     }
                 }
