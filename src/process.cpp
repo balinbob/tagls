@@ -1,4 +1,5 @@
 #include "process.h"
+#include "CaseInsensitiveTagMap.hpp"
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -44,6 +45,7 @@ bool stringListsEqual(const TagLib::StringList& a, const TagLib::StringList& b) 
     return true;
 }
 
+
 void printHeader(const Hdr& h, const Hdr& prevHdr, bool all) {
     move_cursor_to_column(0);
     std::string artist = h.artist.toString().to8Bit();
@@ -73,7 +75,7 @@ void printHeader(const Hdr& h, const Hdr& prevHdr, bool all) {
     }
 }
 
-void processFlac(const fs::path& path, Hdr& prevHdr, bool first) {        
+void processFlac(const fs::path& path, Hdr& prevHdr, TagMap& prevExtra, bool first, bool extended) {        
     std::cout << std::endl;   // separate command from output
     int fieldLen = 22;
     int cursorColumn = fieldLen + 8;
@@ -119,6 +121,17 @@ void processFlac(const fs::path& path, Hdr& prevHdr, bool first) {
                     }
                 }
             }
+
+            TagMap extra;
+            for (const auto& [key, values] : fields) {
+                std::string skey = toLower(key.to8Bit());
+            
+                if (standardKeys.find(skey) == standardKeys.end()) {
+                    extra[skey] = values;
+                }
+            }
+
+
             if (first) {
                 first = false;
                 printHeader(h, prevHdr, true);
@@ -128,6 +141,21 @@ void processFlac(const fs::path& path, Hdr& prevHdr, bool first) {
                 printHeader(h, prevHdr);
                             // std::cout << "CHANGED!!!!!!!!!!!\n";
             }
+
+            if (extended) {
+                for (const auto& [key, values] : extra) {
+                    const auto it = prevExtra.find(key);
+                    const bool changed = it == prevExtra.end() || it->second != values;
+
+                    if (first || changed) {
+                        for (const auto& val : values) {
+                            std::cout << "[+] " << key << ": " << val.to8Bit(true) << "\n";
+                        }
+                    }
+                }
+                prevExtra = extra;
+            }
+
             move_cursor_to_column(0);
             std::cout << fname;
             move_cursor_to_column(fieldLen);
