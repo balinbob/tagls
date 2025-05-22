@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <taglib/tstringlist.h>
 
+
 struct CaseInsensitiveHash {
     std::size_t operator()(const std::string& s) const {
         std::string lowered;

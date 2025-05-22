@@ -6,6 +6,9 @@
 // #include <taglib/tstringlist.h>
 #include <unordered_set>
 #include "CaseInsensitiveTagMap.hpp"
+
+inline bool useColor = false;
+
 namespace fs = std::filesystem;
 
 struct Hdr {

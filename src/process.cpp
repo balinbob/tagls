@@ -11,6 +11,12 @@
 #include <taglib/xiphcomment.h>
 #include <taglib/tstringlist.h>
 
+#define RESET   (useColor ? "\033[0m"  : "")
+#define GRAY    (useColor ? "\033[90m" : "")
+#define BROWN   (useColor ? "\033[33m" : "")
+#define CYAN    (useColor ? "\033[36m" : "")
+#define GREEN   (useColor ? "\033[32m" : "")
+
 namespace fs = std::filesystem;
 
 
@@ -48,6 +54,7 @@ bool stringListsEqual(const TagLib::StringList& a, const TagLib::StringList& b) 
 
 void printHeader(const Hdr& h, const Hdr& prevHdr, bool all) {
     move_cursor_to_column(0);
+
     std::string artist = h.artist.toString().to8Bit();
     std::string album = h.album.toString().to8Bit();
     std::string discnumber = h.discnumber.toString().to8Bit();
@@ -55,29 +62,32 @@ void printHeader(const Hdr& h, const Hdr& prevHdr, bool all) {
     std::string genre = h.genre.toString().to8Bit();
     std::string comment = h.comment.toString().to8Bit();
     
+    std::cout << GREEN;
+
     if ((artist != "") && (h.artist != prevHdr.artist)) {
-        std::cout << h.artist << std::endl;
+        std::cout << "artist    : " << h.artist << std::endl;
     }
     if ((album != "") && (all || h.album != prevHdr.album)) {
-        std::cout << h.album << std::endl;
+        std::cout << "album     : " << h.album << std::endl;
     }
     if ((discnumber != "") && (all || h.discnumber != prevHdr.discnumber)) {
-        std::cout << h.discnumber << std::endl;
+        std::cout << "discnumber: " << h.discnumber << std::endl;
     }
     if ((date != "") && (all || h.date != prevHdr.date)) {
-        std::cout << h.date << std::endl;
+        std::cout << "date      : " << h.date << std::endl;
     }
     if ((genre != "") && all || (h.genre != prevHdr.genre)) {
-        std::cout << h.genre << std::endl;
+        std::cout << "genre     : " << h.genre << std::endl;
     }
     if ((comment != "") && (all || h.comment != prevHdr.comment)) {
-        std::cout << h.comment << std::endl;
+        std::cout << "comment   : " << h.comment << std::endl;
     }
+    std::cout << RESET;
 }
 
 void processFlac(const fs::path& path, Hdr& prevHdr, TagMap& prevExtra, bool first, bool extended) {        
     std::cout << std::endl;   // separate command from output
-    int fieldLen = 22;
+    int fieldLen = 28;
     int cursorColumn = fieldLen + 8;
                     
     std::string fname = path.filename().stem().string();
@@ -133,7 +143,7 @@ void processFlac(const fs::path& path, Hdr& prevHdr, TagMap& prevExtra, bool fir
 
 
             if (first) {
-                first = false;
+//                first = false;
                 printHeader(h, prevHdr, true);
             }
             else if (h != prevHdr) {
@@ -156,13 +166,24 @@ void processFlac(const fs::path& path, Hdr& prevHdr, TagMap& prevExtra, bool fir
                 prevExtra = extra;
             }
 
+            if (h.album != prevHdr.album) {
+                std::cout << GRAY;
+                move_cursor_to_column(0);
+                std::cout << "filename";
+                move_cursor_to_column(cursorColumn);
+                std::cout << "t#";
+                move_cursor_to_column(cursorColumn + 4);
+                std::cout << "title\n";
+                std::cout << RESET;
+            }
             move_cursor_to_column(0);
+            std::cout << CYAN;
             std::cout << fname;
             move_cursor_to_column(fieldLen);
             std::cout << "  .flac";
 
             move_cursor_to_column(cursorColumn);
-            std::cout << tracknumber << "  " << title;
+            std::cout << BROWN << tracknumber << "  " << CYAN << title << RESET;
             prevHdr = h;
         }
     }

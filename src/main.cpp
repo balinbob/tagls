@@ -15,14 +15,19 @@ Hdr prevHdr;
 bool first = false;
 
 void printUsage(char* argv[]) {
-    std::cout << argv[0] << " <path to directory containing .flac files>\n";
+    std::cout << "Usage:  " << argv[0] << " [ -e | -r | -c ]" << " <path/to/directory/containing/.flac/files>\n";
+    std::cout << "-e  extended (nonstandard) tags\n";
+    std::cout << "-r  recurse directories\n";
+    std::cout << "-c  color output\n";
 }
 
 int main(int argc, char* argv[]) {
+    int errors = 0;
     bool recurse = false;
     bool extended = false;
     std::vector<fs::path> inputDirs;
     std::vector<fs::path> allDirs;
+    if (argc < 2) printUsage(argv);
     for (int argno = 1; argno < argc; argno++) {
         std::string arg = argv[argno];
         if (arg == "-r") {
@@ -31,12 +36,16 @@ int main(int argc, char* argv[]) {
         else if (arg == "-e") {
             extended = true;
         }
+        else if (arg == "-c") {
+            useColor = true;
+        }
         else if (fs::exists(arg) && fs::is_directory(arg)) {
             inputDirs.emplace_back(arg);
         }
         else {
-            printUsage(argv);
-            std::cout << "invalid argument: " << arg << "\n";
+            if (!errors) printUsage(argv);
+            errors += 1;
+            std::cout << "invalid argument or path not found: " << arg << "\n";
         }
     }
 
