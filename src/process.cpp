@@ -51,7 +51,6 @@ bool stringListsEqual(const TagLib::StringList& a, const TagLib::StringList& b) 
     return true;
 }
 
-
 void printHeader(const Hdr& h, const Hdr& prevHdr, bool all) {
     move_cursor_to_column(0);
 
@@ -64,7 +63,7 @@ void printHeader(const Hdr& h, const Hdr& prevHdr, bool all) {
     
     std::cout << GREEN;
 
-    if ((artist != "") && (h.artist != prevHdr.artist)) {
+    if ((artist != "") && (all || (h.artist != prevHdr.artist))) {
         std::cout << "artist    : " << h.artist << std::endl;
     }
     if ((album != "") && (all || h.album != prevHdr.album)) {
@@ -76,13 +75,34 @@ void printHeader(const Hdr& h, const Hdr& prevHdr, bool all) {
     if ((date != "") && (all || h.date != prevHdr.date)) {
         std::cout << "date      : " << h.date << std::endl;
     }
-    if ((genre != "") && all || (h.genre != prevHdr.genre)) {
+    if ((genre != "") && (all || (h.genre != prevHdr.genre))) {
         std::cout << "genre     : " << h.genre << std::endl;
     }
     if ((comment != "") && (all || h.comment != prevHdr.comment)) {
         std::cout << "comment   : " << h.comment << std::endl;
     }
     std::cout << RESET;
+}
+
+void collectHeaderTags(Hdr& h, const TagLib::StringList& values, const std::string& skey) {
+    if (toLower(skey) == "artist") {
+        h.artist = values;
+    }
+    else if (toLower(skey) == "album") {
+        h.album = values;
+    }
+    else if (toLower(skey) == "date") {
+        h.date = values;
+    }
+    else if (toLower(skey) == "genre") {
+        h.genre = values;
+    }
+    else if (toLower(skey) == "comment") {
+        h.comment = values;
+    }
+    else if (toLower(skey) == "discnumber") {
+        h.discnumber = values;
+    }
 }
 
 void processFlac(const fs::path& path, Hdr& prevHdr, TagMap& prevExtra, bool first, bool extended) {        
@@ -111,45 +131,28 @@ void processFlac(const fs::path& path, Hdr& prevHdr, TagMap& prevExtra, bool fir
                         title = val.to8Bit(true);
                         continue;
                     }
-                    if (toLower(skey) == "artist") {
-                        h.artist = values;
-                    }
-                    else if (toLower(skey) == "album") {
-                        h.album = values;
-                    }
-                    else if (toLower(skey) == "date") {
-                        h.date = values;
-                    }
-                    else if (toLower(skey) == "genre") {
-                        h.genre = values;
-                    }
-                    else if (toLower(skey) == "comment") {
-                        h.comment = values;
-                    }
-                    else if (toLower(skey) == "discnumber") {
-                        h.discnumber = values;
-                    }
+
+                    collectHeaderTags(h, values, skey);
+
                 }
             }
 
             TagMap extra;
-            for (const auto& [key, values] : fields) {
+            for (const auto& [key, valueList] : fields) {
                 std::string skey = toLower(key.to8Bit());
             
                 if (standardKeys.find(skey) == standardKeys.end()) {
-                    extra[skey] = values;
+                    extra[skey] = valueList;
                 }
             }
 
 
             if (first) {
-//                first = false;
                 printHeader(h, prevHdr, true);
             }
             else if (h != prevHdr) {
                 std::cout << std::endl;
                 printHeader(h, prevHdr);
-                            // std::cout << "CHANGED!!!!!!!!!!!\n";
             }
 
             if (extended) {

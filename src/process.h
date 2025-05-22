@@ -3,7 +3,6 @@
 #include <taglib/flacfile.h>
 #include <taglib/tag.h>
 #include <taglib/xiphcomment.h>
-// #include <taglib/tstringlist.h>
 #include <unordered_set>
 #include "CaseInsensitiveTagMap.hpp"
 
@@ -26,8 +25,6 @@ const std::unordered_set<std::string> caseInsensitiveHash, caseInsensitiveEqual,
 
 
 extern TagMap extra;
-// std::map<std::string, TagLib::StringList> extra;
-
 std::string toLower(const std::string& input);
 void move_cursor_to_column(int col);
 bool operator==(const Hdr& a, const Hdr& b);
@@ -35,3 +32,4 @@ bool operator!=(const Hdr& a, const Hdr& b);
 bool stringListsEqual(const TagLib::StringList& a, const TagLib::StringList& b);
 void printHeader(const Hdr& h, const Hdr& prevHdr, bool all = false);
 void processFlac(const fs::path& dir, Hdr& prevHdr, TagMap& prevExtra, bool first, bool extended = false);
+void collectHeaderTags(Hdr& h, const TagLib::StringList& values, const std::string& skey);
