@@ -14,6 +14,11 @@ namespace fs = std::filesystem;
 Hdr prevHdr;
 bool first = false;
 
+/**
+ * Print out the usage message for tagls.
+ *
+ * @param[in] argv command line arguments
+ */
 void printUsage(char* argv[]) {
     std::cout << "Usage:  " << argv[0] << " [ -e | -r | -c ]" << " <path/to/directory/containing/.flac/files>\n";
     std::cout << "-e  extended (nonstandard) tags\n";
@@ -21,6 +26,17 @@ void printUsage(char* argv[]) {
     std::cout << "-c  color output\n";
 }
 
+/**
+ * The main entry point of the program.
+ *
+ * This function parses command line arguments and calls `processFlac` for each
+ * FLAC file in the specified directories. It keeps track of the previous header
+ * and extra tags to be able to print information only when it changes.
+ *
+ * @param argc the number of command line arguments
+ * @param argv the command line arguments
+ * @return 0 if successful, 1 if there were errors
+ */
 int main(int argc, char* argv[]) {
     int errors = 0;
     bool recurse = false;

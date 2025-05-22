@@ -20,6 +20,10 @@
 namespace fs = std::filesystem;
 
 
+/**
+ * Returns a copy of the input string with all characters converted to lower
+ * case using the locale-insensitive std::tolower function.
+ */
 std::string toLower(const std::string& input) {
     std::string result = input;
     std::transform(result.begin(), result.end(), result.begin(),
@@ -27,10 +31,23 @@ std::string toLower(const std::string& input) {
     return result;
 }
 
+/**
+ * Moves the terminal cursor to a specified column.
+ *
+ * @param col The column number to move the cursor to, where column 1 is the
+ *            first column of the line.
+ */
+
 void move_cursor_to_column(int col) {
     std::cout << "\033[" << col << "G";
 }
 
+/**
+ * Compares two Hdr objects for equality.
+ *
+ * Two Hdr objects are equal if and only if all their corresponding StringList
+ * fields are equal.
+ */
 bool operator==(const Hdr& a, const Hdr& b) {
     return stringListsEqual(a.artist, b.artist) &&
            stringListsEqual(a.album, b.album) &&
@@ -40,16 +57,60 @@ bool operator==(const Hdr& a, const Hdr& b) {
            stringListsEqual(a.comment, b.comment);
 }
 
+/**
+ * Compares two Hdr objects for inequality.
+ *
+ * Two Hdr objects are unequal if and only if any of their corresponding
+ * StringList fields are unequal.
+ */
 bool operator!=(const Hdr& a, const Hdr& b) {
     return !(a == b);
 }
 
+/**
+ * Compares two TagLib::StringList objects for equality.
+ *
+ * Two TagLib::StringList objects are equal if and only if they have the same
+ * size and all corresponding elements are equal.
+ */
 bool stringListsEqual(const TagLib::StringList& a, const TagLib::StringList& b) {
     if (a.size() != b.size()) return false;
     for (size_t i = 0; i < a.size(); ++i)
         if (a[i] != b[i]) return false;
     return true;
 }
+
+/**
+ * Prints the header information for a FLAC file.
+ *
+ * This function displays various metadata fields of a FLAC file's header,
+ * such as artist, album, disc number, date, genre, and comment. It compares
+ * each field against the previous header and prints only the fields that 
+ * differ, unless the `all` parameter is set to `true`, in which case all 
+ * fields are printed regardless of changes.
+ *
+ * @param h The current header containing the metadata to be printed.
+ * @param prevHdr The previous header used for comparison to determine 
+ *                which fields have changed.
+ * @param all A boolean flag indicating whether to print all fields or 
+ *            only those that have changed since the previous header.
+ */
+
+/**
+ * Prints the header information for a FLAC file.
+ *
+ * This function displays various metadata fields of a FLAC file's header,
+ * such as artist, album, disc number, date, genre, and comment. It compares
+ * each field against the previous header and prints only the fields that 
+ * differ, unless the `all` parameter is set to `true`, in which case all 
+ * fields are printed regardless of changes.
+ *
+ * @param h The current header containing the metadata to be printed.
+ * @param prevHdr The previous header used for comparison to determine 
+ *                which fields have changed.
+ * @param all A boolean flag indicating whether to print all fields or 
+ *            only those that have changed since the previous header.
+ */
 
 void printHeader(const Hdr& h, const Hdr& prevHdr, bool all) {
     move_cursor_to_column(0);
@@ -84,6 +145,19 @@ void printHeader(const Hdr& h, const Hdr& prevHdr, bool all) {
     std::cout << RESET;
 }
 
+/**
+ * Updates the header fields of a Hdr object with new values.
+ *
+ * The function takes a Hdr object, a TagLib::StringList containing the new
+ * values, and a string key identifying which header field to update. It
+ * compares the key to the names of the header fields in a case-insensitive
+ * manner and updates the corresponding field in the Hdr object.
+ *
+ * @param h The Hdr object whose header fields are to be updated.
+ * @param values The TagLib::StringList containing the new values for the
+ *               header field.
+ * @param skey The string key identifying which header field to update.
+ */
 void collectHeaderTags(Hdr& h, const TagLib::StringList& values, const std::string& skey) {
     if (toLower(skey) == "artist") {
         h.artist = values;
@@ -105,6 +179,24 @@ void collectHeaderTags(Hdr& h, const TagLib::StringList& values, const std::stri
     }
 }
 
+/**
+ * Prints FLAC tags in a readable format.
+ *
+ * This function takes a path to a FLAC file, the previous header tags, the
+ * previous extra tags, a boolean indicating whether this is the first file
+ * being processed, and a boolean indicating whether or not to print extended
+ * information. It prints the tags from the FLAC file in a readable format and
+ * keeps track of the previous header and extra tags to be able to print
+ * information only when it changes.
+ *
+ * @param path The path to the FLAC file being processed.
+ * @param prevHdr The previous header tags.
+ * @param prevExtra The previous extra tags.
+ * @param first A boolean indicating whether this is the first file being
+ *              processed.
+ * @param extended A boolean indicating whether or not to print extended
+ *                 information.
+ */
 void processFlac(const fs::path& path, Hdr& prevHdr, TagMap& prevExtra, bool first, bool extended) {        
     std::cout << std::endl;   // separate command from output
     int fieldLen = 28;
